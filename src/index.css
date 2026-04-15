@@ -94,30 +94,28 @@ header {
 }
 .hi-val    { color: #A07858; }
 
-/* ── Combo slot (always reserves space) ── */
-.combo-slot {
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ── Score block (popup anchor) ── */
+.score-block {
+  position: relative;
+  overflow: visible;
+}
+.score-popup {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #D96C38;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: scoreFloat 0.9s ease-out forwards;
+}
+@keyframes scoreFloat {
+  0%   { transform: translateX(-50%) translateY(0);     opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-36px); opacity: 0; }
 }
 
-/* ── Combo banner ── */
-.combo-banner {
-  padding: 5px 22px;
-  background: linear-gradient(90deg, #D96C38, #F0A070);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.88rem;
-  border-radius: 999px;
-  letter-spacing: 0.8px;
-  box-shadow: 0 2px 10px rgba(217, 108, 56, 0.28);
-  animation: comboPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes comboPop {
-  from { transform: scale(0.6); opacity: 0; }
-  to   { transform: scale(1);   opacity: 1; }
-}
 
 /* ── Grid ── */
 .grid {
@@ -375,6 +373,10 @@ header {
     --card: min(112px, calc((100vw - 76px) / 4));
   }
 
+  body {
+    align-items: flex-start;
+  }
+
   .app {
     padding: 14px 14px 24px;
     gap: 12px;
@@ -392,8 +394,6 @@ header {
   .lives-row { font-size: 0.68rem; }
   .hi-val    { font-size: 0.82rem; }
 
-  .combo-slot   { height: 26px; }
-  .combo-banner { font-size: 0.8rem; padding: 4px 16px; }
 
   .grid { border-radius: 18px; }
 

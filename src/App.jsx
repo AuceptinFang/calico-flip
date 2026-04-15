@@ -51,9 +51,11 @@ export default function App() {
   const [justMatched, setJustMatched] = useState([])
   const [justWrong, setJustWrong]   = useState([])
   const [hi, setHi]                 = useState(() => +localStorage.getItem('calico-hi') || 0)
+  const [scorePopups, setScorePopups] = useState([])
 
   // Use a ref for click-locking to avoid stale closure issues with rapid clicks
-  const lockedRef = useRef(false)
+  const lockedRef   = useRef(false)
+  const popupIdRef  = useRef(0)
 
   // Keep high score in sync
   useEffect(() => {
@@ -95,6 +97,9 @@ export default function App() {
         setCards(matched)
         setScore(s => s + pts)
         setCombo(newCombo)
+        const pid = ++popupIdRef.current
+        setScorePopups(ps => [...ps, { id: pid, pts }])
+        setTimeout(() => setScorePopups(ps => ps.filter(p => p.id !== pid)), 900)
         setSel([])
         setJustMatched([c1.uid, c2.uid])
         setTimeout(() => setJustMatched([]), 600)
@@ -169,13 +174,14 @@ export default function App() {
   const hearts = Array.from({ length: MAX_LIVES }, (_, i) =>
     i < lives ? '❤️' : '🖤'
   )
-  const multiplier = 1 + Math.floor(combo / 2)
   const roundBonus = 30 + round * 10
 
   return (
     <div className="app">
       <header>
         <h1 className="title">三花翻翻乐</h1>
+        <p className="subtitle">猫猫素材来自 <a href="https://github.com/aCalico24/Calico-Stickers" target="_blank" rel="noreferrer" style={{color:'inherit'}}>aCalico24/Calico-Stickers</a></p>
+        <p className="subtitle">本仓库地址<a href="https://github.com/luisleee/calico-flip" target="_blank" rel="noreferrer" style={{color:'inherit'}}>luisleee/calico-flip</a></p>
       </header>
 
       <div className="hud">
@@ -185,9 +191,12 @@ export default function App() {
           <span className="hud-label">关</span>
         </div>
         <div className="hud-divider" />
-        <div className="hud-block">
+        <div className="hud-block score-block">
           <span className="hud-label">得分</span>
           <span className="hud-val score-val">{score}</span>
+          {scorePopups.map(p => (
+            <span key={p.id} className="score-popup">+{p.pts}</span>
+          ))}
         </div>
         <div className="hud-divider" />
         <div className="hud-block">
@@ -204,13 +213,6 @@ export default function App() {
         </div>
       </div>
 
-      <div className="combo-slot">
-        {combo >= 2 && !over && !roundClear && (
-          <div className="combo-banner" key={combo}>
-            {combo} 连击！&nbsp; ×{multiplier} 倍
-          </div>
-        )}
-      </div>
 
       <div className="grid">
         {cards.map((card, idx) => (
