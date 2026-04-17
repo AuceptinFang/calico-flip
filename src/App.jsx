@@ -1,19 +1,44 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { FaHeart, FaRegHeart } from 'react-icons/fa'
 import Card from './Card.jsx'
 
-// 8 cat stickers from aCalico24/Calico-Stickers (三花 folder)
 const CATS = [
-  { id: 1, name: '无语',    src: 'https://raw.githubusercontent.com/aCalico24/Calico-Stickers/main/%E4%B8%89%E8%8A%B1/%E6%97%A0%E8%AF%AD.jpg' },
-  { id: 2, name: '豹笑',    src: 'https://raw.githubusercontent.com/aCalico24/Calico-Stickers/main/%E4%B8%89%E8%8A%B1/%E8%B1%B9%E7%AC%91.jpg' },
-  { id: 3, name: '问号',    src: 'https://raw.githubusercontent.com/aCalico24/Calico-Stickers/main/%E4%B8%89%E8%8A%B1/%E9%97%AE%E5%8F%B7.jpg' },
-  { id: 4, name: '投降',    src: 'https://raw.githubusercontent.com/aCalico24/Calico-Stickers/main/%E4%B8%89%E8%8A%B1/%E6%8A%95%E9%99%8D.png' },
-  { id: 5, name: '猫皇帝',  src: 'https://raw.githubusercontent.com/aCalico24/Calico-Stickers/main/%E4%B8%89%E8%8A%B1/%E7%8C%AB%E7%9A%87%E5%B8%9D.jpg' },
-  { id: 6, name: '送花',    src: 'https://raw.githubusercontent.com/aCalico24/Calico-Stickers/main/%E4%B8%89%E8%8A%B1/%E9%80%81%E8%8A%B1.jpg' },
-  { id: 7, name: '咸鱼',    src: 'https://raw.githubusercontent.com/aCalico24/Calico-Stickers/main/%E4%B8%89%E8%8A%B1/%E6%83%B3%E5%BD%93%E5%92%B8%E9%B1%BC.jpg' },
-  { id: 8, name: '名侦探',  src: 'https://raw.githubusercontent.com/aCalico24/Calico-Stickers/main/%E4%B8%89%E8%8A%B1/%E5%90%8D%E4%BE%A6%E6%8E%A2.png' },
+  { id:  1, name: '无语',       src: '/assets/cats/wuyu.jpg' },
+  { id:  2, name: '豹笑',       src: '/assets/cats/baoxiao.png' },
+  { id:  3, name: '问号',       src: '/assets/cats/wenhao.jpg' },
+  { id:  4, name: '问号2',      src: '/assets/cats/wenhao2.jpg' },
+  { id:  5, name: '投降',       src: '/assets/cats/touxiang.png' },
+  { id:  6, name: '猫皇帝',     src: '/assets/cats/maohuangdi.jpg' },
+  { id:  7, name: '猫皇帝无语', src: '/assets/cats/maohuangdi-wuyu.jpg' },
+  { id:  8, name: '送花',       src: '/assets/cats/songhua.jpg' },
+  { id:  9, name: '咸鱼',       src: '/assets/cats/xianyu.jpg' },
+  { id: 10, name: '名侦探',     src: '/assets/cats/mingzhentang.png' },
+  { id: 11, name: '初始',       src: '/assets/cats/chushi.jpg' },
+  { id: 12, name: '入眠',       src: '/assets/cats/rumian.jpg' },
+  { id: 13, name: '大犇',       src: '/assets/cats/daben.jpg' },
+  { id: 14, name: '很坏吗',     src: '/assets/cats/henhuaima.jpg' },
+  { id: 15, name: '的确坏',     src: '/assets/cats/diquehuai.png' },
+  { id: 16, name: '注意坏猫',   src: '/assets/cats/zhuyihuaimao.png' },
+  { id: 17, name: '添乱',       src: '/assets/cats/tianluan.jpg' },
+  { id: 18, name: '吃白饭',     src: '/assets/cats/chibaifan.png' },
+  { id: 19, name: '地铁老猫',   src: '/assets/cats/ditielaomao.jpg' },
+  { id: 20, name: '目移',       src: '/assets/cats/muyi.jpg' },
+  { id: 21, name: '蒟蒻',       src: '/assets/cats/juuruo.jpg' },
+  { id: 22, name: '思维升华1',  src: '/assets/cats/siweishenghua1.jpg' },
+  { id: 23, name: '思维升华2',  src: '/assets/cats/siweishenghua2.jpg' },
+  { id: 24, name: '何罪之有',   src: '/assets/cats/hezuizhiyou.jpg' },
+  { id: 25, name: '命也是命',   src: '/assets/cats/mingyeshiming.jpg' },
+  { id: 26, name: '别玩洗衣机', src: '/assets/cats/biewannaxiyijile.jpg' },
+  { id: 27, name: '笔自己写',   src: '/assets/cats/bizijixiezuoye.jpg' },
+  { id: 28, name: '萝卜纸巾',   src: '/assets/cats/luobozhijin.png' },
+  { id: 29, name: '讲坛眯眼',   src: '/assets/cats/yinhuajiangtan-miyan.jpg' },
+  { id: 30, name: '讲坛睁眼',   src: '/assets/cats/yinhuajiangtan-zhengyan.jpg' },
+  { id: 31, name: 'V50',        src: '/assets/cats/v50.png' },
+  { id: 32, name: '自定义文本', src: '/assets/cats/zidingywenben.png' },
 ]
 
 const MAX_LIVES = 10
+const BOARD_PAIRS = 8
 
 function shuffle(arr) {
   const a = [...arr]
@@ -25,8 +50,9 @@ function shuffle(arr) {
 }
 
 function mkBoard() {
+  const picked = shuffle(CATS).slice(0, BOARD_PAIRS)
   return shuffle(
-    CATS.flatMap(cat => [
+    picked.flatMap(cat => [
       { ...cat, uid: `${cat.id}-a`, flipped: false, matched: false },
       { ...cat, uid: `${cat.id}-b`, flipped: false, matched: false },
     ])
@@ -39,6 +65,7 @@ function calcPoints(combo) {
 }
 
 export default function App() {
+  const [imagesReady, setImagesReady] = useState(false)
   const [cards, setCards]           = useState(mkBoard)
   const [sel, setSel]               = useState([])        // indices of currently selected cards
   const [score, setScore]           = useState(0)
@@ -52,6 +79,18 @@ export default function App() {
   const [justWrong, setJustWrong]   = useState([])
   const [hi, setHi]                 = useState(() => +localStorage.getItem('calico-hi') || 0)
   const [scorePopups, setScorePopups] = useState([])
+
+  useEffect(() => {
+    let loaded = 0
+    CATS.forEach(cat => {
+      const img = new Image()
+      img.onload = img.onerror = () => {
+        loaded++
+        if (loaded === CATS.length) setImagesReady(true)
+      }
+      img.src = cat.src
+    })
+  }, [])
 
   // Use a ref for click-locking to avoid stale closure issues with rapid clicks
   const lockedRef   = useRef(false)
@@ -171,10 +210,16 @@ export default function App() {
     setJustWrong([])
   }
 
-  const hearts = Array.from({ length: MAX_LIVES }, (_, i) =>
-    i < lives ? '❤️' : '🖤'
-  )
   const roundBonus = 30 + round * 10
+
+  if (!imagesReady) {
+    return (
+      <div className="app loading-screen">
+        <div className="loading-spinner" />
+        <p className="loading-text">加载中…</p>
+      </div>
+    )
+  }
 
   return (
     <div className="app">
@@ -202,8 +247,16 @@ export default function App() {
         <div className="hud-block">
           <span className="hud-label">生命</span>
           <div className="lives-rows">
-            <div className="lives-row">{hearts.slice(0, 5).join('')}</div>
-            <div className="lives-row">{hearts.slice(5).join('')}</div>
+            <div className="lives-row">
+              {Array.from({ length: 5 }, (_, i) =>
+                i < lives ? <FaHeart key={i} className="life-icon life-icon--on" /> : <FaRegHeart key={i} className="life-icon" />
+              )}
+            </div>
+            <div className="lives-row">
+              {Array.from({ length: 5 }, (_, i) =>
+                i + 5 < lives ? <FaHeart key={i} className="life-icon life-icon--on" /> : <FaRegHeart key={i} className="life-icon" />
+              )}
+            </div>
           </div>
         </div>
         <div className="hud-divider" />
