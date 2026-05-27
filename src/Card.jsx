@@ -1,9 +1,14 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
 export default function Card({ card, isPeeking, isJustMatched, isJustWrong, onClick }) {
-  const { flipped, matched, src, name } = card
+  const { flipped, matched, src, fallbackSrc, name } = card
   const showFront = flipped || matched || isPeeking
   const wrapRef = useRef(null)
+  const [imageSrc, setImageSrc] = useState(src)
+
+  useEffect(() => {
+    setImageSrc(src)
+  }, [src])
 
   // Pop animation: fires once when a match is confirmed
   useEffect(() => {
@@ -40,7 +45,14 @@ export default function Card({ card, isPeeking, isJustMatched, isJustWrong, onCl
         <div className="card-back" />
         {/* Front face */}
         <div className="card-front">
-          <img src={src} alt={name} draggable="false" />
+          <img
+            src={imageSrc}
+            alt={name}
+            draggable="false"
+            onError={() => {
+              if (fallbackSrc && imageSrc !== fallbackSrc) setImageSrc(fallbackSrc)
+            }}
+          />
           <span className="cat-label">{name}</span>
         </div>
       </div>

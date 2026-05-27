@@ -1,72 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { FaHeart, FaRegHeart } from 'react-icons/fa'
 import Card from './Card.jsx'
-
-const CATS = [
-  { id:  1, name: '无语',       src: '/assets/cats/wuyu.jpg' },
-  { id:  2, name: '豹笑',       src: '/assets/cats/baoxiao.png' },
-  { id:  3, name: '问号',       src: '/assets/cats/wenhao.jpg' },
-  { id:  4, name: '问号2',      src: '/assets/cats/wenhao2.jpg' },
-  { id:  5, name: '投降',       src: '/assets/cats/touxiang.png' },
-  { id:  6, name: '猫皇帝',     src: '/assets/cats/maohuangdi.jpg' },
-  { id:  7, name: '猫皇帝无语', src: '/assets/cats/maohuangdi-wuyu.jpg' },
-  { id:  8, name: '送花',       src: '/assets/cats/songhua.jpg' },
-  { id:  9, name: '咸鱼',       src: '/assets/cats/xianyu.jpg' },
-  { id: 10, name: '名侦探',     src: '/assets/cats/mingzhentang.png' },
-  { id: 11, name: '初始',       src: '/assets/cats/chushi.jpg' },
-  { id: 12, name: '入眠',       src: '/assets/cats/rumian.jpg' },
-  { id: 13, name: '大犇',       src: '/assets/cats/daben.jpg' },
-  { id: 14, name: '很坏吗',     src: '/assets/cats/henhuaima.jpg' },
-  { id: 15, name: '的确坏',     src: '/assets/cats/diquehuai.png' },
-  { id: 16, name: '注意坏猫',   src: '/assets/cats/zhuyihuaimao.png' },
-  { id: 17, name: '添乱',       src: '/assets/cats/tianluan.jpg' },
-  { id: 18, name: '吃白饭',     src: '/assets/cats/chibaifan.png' },
-  { id: 19, name: '地铁老猫',   src: '/assets/cats/ditielaomao.jpg' },
-  { id: 20, name: '目移',       src: '/assets/cats/muyi.jpg' },
-  { id: 21, name: '蒟蒻',       src: '/assets/cats/juuruo.jpg' },
-  { id: 22, name: '思维升华1',  src: '/assets/cats/siweishenghua1.jpg' },
-  { id: 23, name: '思维升华2',  src: '/assets/cats/siweishenghua2.jpg' },
-  { id: 24, name: '何罪之有',   src: '/assets/cats/hezuizhiyou.jpg' },
-  { id: 25, name: '命也是命',   src: '/assets/cats/mingyeshiming.jpg' },
-  { id: 26, name: '别玩洗衣机', src: '/assets/cats/biewannaxiyijile.jpg' },
-  { id: 27, name: '笔自己写',   src: '/assets/cats/bizijixiezuoye.jpg' },
-  { id: 28, name: '萝卜纸巾',   src: '/assets/cats/luobozhijin.png' },
-  { id: 29, name: '讲坛眯眼',   src: '/assets/cats/yinhuajiangtan-miyan.jpg' },
-  { id: 30, name: '讲坛睁眼',   src: '/assets/cats/yinhuajiangtan-zhengyan.jpg' },
-  { id: 31, name: 'V50',        src: '/assets/cats/v50.png' },
-  { id: 32, name: '自定义文本', src: '/assets/cats/zidingywenben.png' },
-]
-
-const MAX_LIVES = 10
-const BOARD_PAIRS = 8
-
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
-
-function mkBoard() {
-  const picked = shuffle(CATS).slice(0, BOARD_PAIRS)
-  return shuffle(
-    picked.flatMap(cat => [
-      { ...cat, uid: `${cat.id}-a`, flipped: false, matched: false },
-      { ...cat, uid: `${cat.id}-b`, flipped: false, matched: false },
-    ])
-  )
-}
-
-// Points per match based on combo count
-function calcPoints(combo) {
-  return 10 * (1 + Math.floor(combo / 2))
-}
+import {
+  MAX_LIVES,
+  calcPoints,
+  createBoard,
+  loadCatalog,
+} from './catalog.js'
 
 export default function App() {
   const [imagesReady, setImagesReady] = useState(false)
-  const [cards, setCards]           = useState(mkBoard)
+  const [catalog, setCatalog]       = useState([])
+  const [cards, setCards]           = useState([])
   const [sel, setSel]               = useState([])        // indices of currently selected cards
   const [score, setScore]           = useState(0)
   const [lives, setLives]           = useState(MAX_LIVES)
@@ -81,15 +26,18 @@ export default function App() {
   const [scorePopups, setScorePopups] = useState([])
 
   useEffect(() => {
-    let loaded = 0
-    CATS.forEach(cat => {
-      const img = new Image()
-      img.onload = img.onerror = () => {
-        loaded++
-        if (loaded === CATS.length) setImagesReady(true)
-      }
-      img.src = cat.src
+    let cancelled = false
+
+    loadCatalog().then(cats => {
+      if (cancelled) return
+      setCatalog(cats)
+      setCards(createBoard(cats))
+      setImagesReady(true)
     })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   // Use a ref for click-locking to avoid stale closure issues with rapid clicks
@@ -130,9 +78,9 @@ export default function App() {
       const pts = calcPoints(newCombo)
 
       setTimeout(() => {
-        const matched = next.map((c, i) =>
-          i === i1 || i === i2 ? { ...c, matched: true, flipped: true } : c
-        )
+          const matched = next.map((c, i) =>
+            i === i1 || i === i2 ? { ...c, matched: true, flipped: true } : c
+          )
         setCards(matched)
         setScore(s => s + pts)
         setCombo(newCombo)
@@ -162,7 +110,7 @@ export default function App() {
             setRound(r => r + 1)
             setScore(s => s + bonus)
             setLives(MAX_LIVES)
-            setCards(mkBoard())
+            setCards(createBoard(catalog))
             setCombo(0)
             lockedRef.current = false
           }, 1400)
@@ -193,11 +141,11 @@ export default function App() {
         }
       }, 950)
     }
-  }, [cards, sel, over, combo, lives, round])
+  }, [cards, sel, over, combo, lives, round, catalog])
 
   const restart = () => {
     lockedRef.current = false
-    setCards(mkBoard())
+    setCards(createBoard(catalog))
     setSel([])
     setScore(0)
     setLives(MAX_LIVES)
